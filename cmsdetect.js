@@ -11,7 +11,7 @@ var fs = require('fs');
 
 // VARS
 // ------------------------------------
-var sourcePath = "";
+var sourcePath = "sites.txt";
 var links = [];
 var cms = [];
 var resultsCsv = fs.touch('results.csv', 'r');
@@ -34,12 +34,12 @@ casper.start().each(links, function(self, link) {
     if (cmsdetect === null) {
       self.thenOpen(link + "/spip.php?page=login&url=%2Fecrire%2F", function(response) {
         var spipdetect = this.getElementAttribute('meta[name="generator"]', 'content');
-        writeResults(link + "; " + spipdetect);
-        console.log(link + " : " + spipdetect);
+        writeResults(link + "; " + spipdetect.replace(";", " "));
+        console.log(link + " : " + spipdetect.replace(";", " "));
       });
     } else {
-      writeResults(link + "; " + cmsdetect);
-      console.log(link + " : " + cmsdetect);
+      writeResults(link + "; " + cmsdetect.replace(";", " "));
+      console.log(link + " : " + cmsdetect.replace(";", " "));
     }
   });
 });
