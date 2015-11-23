@@ -29,18 +29,44 @@ casper.start();
 // Loop on each link of the links array
 // Find if the meta tag generator exists, otherwise try to find it on spip log page
 casper.start().each(links, function(self, link) {
+
   self.thenOpen(link, function(response) {
-    var cmsdetect = this.getElementAttribute('meta[name="generator"]', 'content');
-    if (cmsdetect === null) {
-      self.thenOpen(link + "/spip.php?page=login&url=%2Fecrire%2F", function(response) {
-        var spipdetect = this.getElementAttribute('meta[name="generator"]', 'content');
-        writeResults(link + "; " + spipdetect.replace(";", " "));
-        console.log(link + " : " + spipdetect.replace(";", " "));
-      });
+
+    // If there is something on the url, search for any meta generator on both
+    // landing page and spip admin if nothing found on first page
+    if (response.status !== null) {
+
+      // Get the meta generator
+      var cmsdetect = getMeta(this);
+
+      // If there isn't any meta, try the spip admin page
+      // Find if the meta exists, and write the response to the results.csv
+      if (cmsdetect === null) {
+        self.thenOpen(link + "/spip.php?page=login&url=%2Fecrire%2F", function(response) {
+          // Get the meta generator
+          var spipdetect = getMeta(this);
+          // Results
+          writeResults(link + "; " + spipdetect);
+          console.log(link + " : " + spipdetect);
+        });
+      } else {
+        writeResults(link + "; " + cmsdetect);
+        console.log(link + " : " + cmsdetect);
+      }
+    // 404 Error
+    } else if (response.status === 404) {
+      writeResults(link + "; 404");
+      console.log(link + " : 404");
+    // 500 Error
+    } else if (response.status === 500) {
+      writeResults(link + "; 500");
+      console.log(link + " : 500");
+    // Unknown host
     } else {
-      writeResults(link + "; " + cmsdetect.replace(";", " "));
-      console.log(link + " : " + cmsdetect.replace(";", " "));
+      writeResults(link + "; Unknown host");
+      console.log(link + " : Unknown host");
     }
+
   });
 });
 
@@ -50,6 +76,14 @@ casper.run();
 
 // FUNCTIONS
 // ------------------------------------
+
+// GET META
+// Return the meta generator content
+// -------------
+function getMeta(that) {
+  var metaContent = that.getElementAttribute('meta[name="generator"]', 'content');
+  return metaContent !== null ? metaContent.replace(";", " ") : metaContent;
+}
 
 // READ LIST
 // Read all websites in a csv file and add it to the links array
